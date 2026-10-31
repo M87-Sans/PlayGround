@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#07060d">
+  <meta name="description" content="HORDE — a reverse Vampire Survivors. You are the swarm. Devour the last defenders of the Dawnfire before the sun rises.">
+  <title>HORDE — The Last Night</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2307060d'/%3E%3Cpath d='M32 12c-6 0-9 4-9 9 0 3 1 5 3 7-7 2-12 8-12 15 0 1 1 2 2 1l8-5 8 9 8-9 8 5c1 1 2 0 2-1 0-7-5-13-12-15 2-2 3-4 3-7 0-5-3-9-9-9z' fill='%23e3425f'/%3E%3Ccircle cx='27' cy='23' r='2.2' fill='%23ffdca8'/%3E%3Ccircle cx='37' cy='23' r='2.2' fill='%23ffdca8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <canvas id="game" aria-label="Horde gameplay arena"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div id="low-horde" aria-hidden="true"></div>
+
+    <!-- In-game HUD -->
+    <section id="hud" class="hidden" aria-label="Game status">
+      <div class="hud-top">
+        <div class="horde-panel glass">
+          <div class="horde-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="M24 9c-5 0-8 3.5-8 8 0 2.5 1 4.5 2.5 6C12 25 8 30 8 36c0 1.3 1.2 2 2.2 1.2L18 32l6 7 6-7 7.8 5.2c1 .8 2.2.1 2.2-1.2 0-6-4-11-10.5-13 1.5-1.5 2.5-3.5 2.5-6 0-4.5-3-8-8-8z" fill="currentColor"/><circle cx="20.5" cy="18" r="1.9" fill="#ffe4b0"/><circle cx="27.5" cy="18" r="1.9" fill="#ffe4b0"/></svg>
+          </div>
+          <div class="horde-text">
+            <span class="eyebrow">THE HORDE</span>
+            <div class="horde-number"><strong id="horde-count">18</strong><span>/ <b id="horde-max">18</b></span></div>
+            <div class="meter"><i id="horde-meter"></i></div>
+          </div>
+        </div>
+
+        <div class="timer-panel">
+          <span class="eyebrow" id="phase-label">NIGHT I</span>
+          <div id="timer">3:00</div>
+          <span class="timer-sub" id="timer-sub">UNTIL DAWN</span>
+        </div>
+
+        <div class="score-panel glass">
+          <button id="sound-btn" class="icon-btn" type="button" aria-label="Mute sound" title="Toggle sound">
+            <svg class="sound-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-8v2.1a6.5 6.5 0 0 1 0 11.8V20a8.5 8.5 0 0 0 0-16z" fill="currentColor"/></svg>
+            <svg class="sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm15.5 3-2.2-2.2-1.4 1.4 2.2 2.2-2.2 2.2 1.4 1.4 2.2-2.2 2.2 2.2 1.4-1.4-2.2-2.2 2.2-2.2-1.4-1.4z" fill="currentColor"/></svg>
+          </button>
+          <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause" title="Pause (Esc)">
+            <svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>
+          </button>
+          <div class="kill-stat">
+            <span class="eyebrow">DEVOURED</span>
+            <strong id="kills">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="xp-panel">
+          <div class="xp-head"><span>LV <b id="level">1</b></span><span id="xp-text">0 / 8 SOULS</span></div>
+          <div class="xp-track"><i id="xp-fill"></i></div>
+          <div id="objective" class="objective"><span class="obj-dot"></span><span id="objective-text">Feed. Grow. Find the Dawnfire.</span></div>
+        </div>
+        <div class="ability-wrap">
+          <button id="surge-btn" class="ability" type="button" aria-label="Blood Surge">
+            <span class="ability-ring"><svg viewBox="0 0 48 48"><path d="M24 5c-5 8-12 13-12 21a12 12 0 0 0 24 0c0-8-7-13-12-21z" fill="currentColor"/><path d="M24 18c-2 3.5-5 5-5 9a5 5 0 0 0 10 0c0-4-3-5.5-5-9z" fill="#1a0710"/></svg></span>
+            <span class="ability-copy"><b>BLOOD SURGE</b><small>SPACE</small></span>
+          </button>
+          <div class="ability-cd" id="ability-cd">READY</div>
+        </div>
+        <div class="mobile-hint" id="mobile-hint">DRAG ANYWHERE TO MOVE</div>
+      </div>
+    </section>
+
+    <div id="joystick" aria-hidden="true"><span></span></div>
+
+    <!-- Title -->
+    <section id="title-screen" class="screen title-screen" aria-labelledby="game-title">
+      <div class="title-shade" aria-hidden="true"></div>
+      <div class="title-content">
+        <div class="title-kicker"><span></span> A REVERSE SURVIVORS NIGHTMARE <span></span></div>
+        <h1 id="game-title" class="game-title" aria-label="Horde">
+          <span class="title-h">H</span><span class="title-o">O</span><span class="title-r">R</span><span class="title-d">D</span><span class="title-e">E</span>
+          <span class="title-drip drip-a" aria-hidden="true"></span>
+          <span class="title-drip drip-b" aria-hidden="true"></span>
+          <span class="title-drip drip-c" aria-hidden="true"></span>
+        </h1>
+        <div class="title-rule"><i></i><span>THE LAST NIGHT</span><i></i></div>
+        <p class="title-hook">You are not the survivor.<br><em>You are the swarm.</em></p>
+        <p class="title-desc">The Dawnfire is dying. Its last defenders are armed, afraid, and very edible. Grow your horde, steal their strength, and devour the Dawnbringer before sunrise.</p>
+        <div class="title-actions">
+          <button id="start-btn" class="primary-btn" type="button">
+            <span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2c-3.2 4.5-7 7.2-7 12a7 7 0 0 0 14 0c0-4.8-3.8-7.5-7-12zm0 8c1.3 2.1 3 3 3 5.2a3 3 0 0 1-6 0c0-2.2 1.7-3.1 3-5.2z" fill="currentColor"/></svg></span>
+            <span><b>BEGIN THE FEAST</b><small>ENTER THE NIGHT</small></span>
+            <span class="btn-arrow">→</span>
+          </button>
+          <div class="title-meta">
+            <span><kbd>WASD</kbd> move</span>
+            <span><kbd>SPACE</kbd> surge</span>
+            <span class="hide-mobile"><kbd>ESC</kbd> pause</span>
+          </div>
+        </div>
+        <div class="title-record" id="best-record">THE NIGHT HAS NOT BEEN SURVIVED</div>
+      </div>
+      <div class="title-side" aria-hidden="true">
+        <div class="moon-mark"><span></span></div>
+        <p>“THEY CAME FOR US<br>AT NIGHTFALL.”</p>
+        <small>— LAST ENTRY, DAWNHOLD WATCH</small>
+      </div>
+      <div class="title-footer">
+        <span>HORDES HAVE NO LEADER</span>
+        <span class="footer-bats" aria-hidden="true">·  ·  ·  ·  ·  ·  ·</span>
+        <button id="title-sound" class="text-btn" type="button">SOUND: ON</button>
+      </div>
+    </section>
+
+    <!-- Level up -->
+    <section id="level-screen" class="screen overlay-screen hidden" aria-labelledby="level-heading">
+      <div class="modal-glow"></div>
+      <div class="level-panel">
+        <div class="level-kicker">THE HORDE EVOLVES</div>
+        <h2 id="level-heading">Choose a mutation</h2>
+        <p class="level-sub">Every kill feeds the dark. Take what you need.</p>
+        <div id="cards" class="cards"></div>
+        <div class="level-foot"><span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> or click to choose</span><span id="level-count">LEVEL 2</span></div>
+      </div>
+    </section>
+
+    <!-- Pause -->
+    <section id="pause-screen" class="screen overlay-screen hidden" aria-labelledby="pause-heading">
+      <div class="small-panel">
+        <div class="level-kicker">THE HUNT HOLDS ITS BREATH</div>
+        <h2 id="pause-heading">Paused</h2>
+        <p class="small-copy">The dawn is patient. You should not be.</p>
+        <div class="pause-actions">
+          <button id="resume-btn" class="primary-btn compact" type="button"><span><b>RESUME</b><small>BACK TO THE HUNT</small></span></button>
+          <button id="pause-sound" class="ghost-btn" type="button">SOUND: ON</button>
+          <button id="quit-btn" class="ghost-btn" type="button">ABANDON RUN</button>
+        </div>
+        <div class="pause-tip">TIP: <span id="pause-tip-text">Bats feed automatically. Position the heart, not each fang.</span></div>
+      </div>
+    </section>
+
+    <!-- End -->
+    <section id="end-screen" class="screen overlay-screen hidden" aria-labelledby="end-heading">
+      <div class="end-wrap">
+        <div class="end-mark" id="end-mark" aria-hidden="true">
+          <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="50" cy="50" r="37" fill="none" stroke="currentColor" stroke-width=".5" stroke-dasharray="2 5"/><path d="M50 16c-7 10-15 16-15 27a15 15 0 0 0 30 0c0-11-8-17-15-27z" fill="currentColor"/></svg>
+        </div>
+        <div class="level-kicker" id="end-kicker">THE LIGHT PREVAILS</div>
+        <h2 id="end-heading">Dawn broke.</h2>
+        <p class="end-copy" id="end-copy">The last defender held the line. Your horde scattered into ash and morning.</p>
+        <div class="end-stats">
+          <div><span>DEVOURED</span><strong id="end-kills">0</strong></div>
+          <div><span>NIGHT SURVIVED</span><strong id="end-time">0:00</strong></div>
+          <div><span>FINAL SWARM</span><strong id="end-level">LV 1</strong></div>
+        </div>
+        <div class="new-best hidden" id="new-best">✦ NEW BLOOD RECORD ✦</div>
+        <div class="end-actions">
+          <button id="retry-btn" class="primary-btn compact" type="button"><span><b>RISE AGAIN</b><small>ONE MORE NIGHT</small></span></button>
+          <button id="menu-btn" class="ghost-btn" type="button">RETURN TO THE DARK</button>
+        </div>
+        <div class="end-record" id="end-record"></div>
+      </div>
+    </section>
+
+    <div id="banner" class="banner" aria-live="polite"><small id="banner-kicker"></small><strong id="banner-text"></strong></div>
+    <div id="toast" class="toast" aria-live="polite"></div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
